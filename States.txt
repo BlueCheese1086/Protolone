@@ -1,0 +1,10 @@
+This file will contain the layout of the states for this robot
+
+PreIntake 
+-Run Intake until sensor is Detected
+
+Shoot Armed
+-Drive to optimal pose around the reef, and power/velocity of shooter and drive are optimal once robot is at its relative pose
+
+Shoot
+-Shoot Note until sesnor doesn't detect note, reset state to PreIntake
