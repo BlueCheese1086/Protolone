@@ -32,6 +32,9 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShooterIO;
+import frc.robot.subsystems.shooter.ShooterIOSpark;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
@@ -48,6 +51,7 @@ public class RobotContainer {
   // Subsystems
   private final Drive drive;
   private final Vision vision;
+  private final Shooter shooter;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -71,6 +75,8 @@ public class RobotContainer {
         vision =
             new Vision(
                 drive::addVisionMeasurement, new VisionIOPhotonVision(cameraName, robotToCamera));
+
+        shooter = new Shooter(new ShooterIOSpark());
         break;
 
       case SIM:
@@ -86,6 +92,7 @@ public class RobotContainer {
             new Vision(
                 drive::addVisionMeasurement,
                 new VisionIOPhotonVisionSim(cameraName, robotToCamera, drive::getPose));
+        shooter = new Shooter(new ShooterIO() {});
         break;
 
       default:
@@ -98,6 +105,7 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {});
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {});
+        shooter = new Shooter(new ShooterIO() {});
         break;
     }
 
