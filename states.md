@@ -7,7 +7,7 @@
 | **Auto score**   | Lock heading to target <br> Run flywheel if within range <br> May auto-align         | Note no longer detected → **Idle**  <br> Idle request → **Eject**  <br> Manual score request → **Manual score**  <br> Score request and correct parameters → **Score**  <br> Manual request → **Manual**   |
 | **Manual score** | Manual control over shooter                                                                                 | Note no longer detected → **Idle**  <br> Idle request → **Eject**  <br> Auto score request → **Auto score**  <br> Score request → **Score**  <br> Manual request → **Manual**         |
 | **Score**        | Shoot the note                                                                                       | Note no longer detected → **Idle**  <br> Manual request → **Manual**                                                                                                         |
-| **Manual**       | Manual control over robot                                                                                   | Exit manual request → **Ready**                                                                                                                                                       |
+| **Manual**       | Manual control over robot                                                                                   | Idle request → **Ready**                                                                                                                                                       |
 
 ```mermaid
 stateDiagram-v2

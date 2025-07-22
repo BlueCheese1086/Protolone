@@ -53,6 +53,9 @@ public class ShooterIOSpark implements ShooterIO {
         .encoder
         .positionConversionFactor(wheelEncoderPositionFactor)
         .velocityConversionFactor(wheelEncoderVelocityFactor);
+    shootConfig
+        .closedLoop
+        .pidf(shootKp, 0.0, 0.0, 0.0);
 
     feedSpark.configure(feedConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     shootSpark.configure(

@@ -13,6 +13,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
@@ -34,4 +35,20 @@ public final class Constants {
     /** Replaying from a log file. */
     REPLAY
   }
+
+  public static enum RobotState {
+    IDLE,
+    INTAKE,
+    EJECT,
+    READY,
+    AUTO_SCORE,
+    MANUAL_SCORE,
+    SCORE,
+    MANUAL
+  }
+
+  public static final Translation2d targetPosition = new Translation2d(
+    4.5,
+    4
+  );
 }

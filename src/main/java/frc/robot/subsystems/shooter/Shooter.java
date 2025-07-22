@@ -4,10 +4,13 @@ import static frc.robot.subsystems.shooter.ShooterConstants.maxVelocity;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class Shooter extends SubsystemBase {
   private final ShooterIO io;
   private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
+
+  LoggedNetworkNumber shootVelocity = new LoggedNetworkNumber("Shooter/ShootVelocity", maxVelocity);
 
   public Shooter(ShooterIO io) {
     this.io = io;
@@ -24,7 +27,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public void shoot() {
-    shoot(maxVelocity);
+    shoot(shootVelocity.get());
   }
 
   public void feed() {
@@ -36,8 +39,21 @@ public class Shooter extends SubsystemBase {
     io.setFeedOpenLoop(-3.0);
   }
 
+  public void eject() {
+    io.setShootOpenLoop(3.0);
+    io.setFeedOpenLoop(3.0);
+  }
+
   public void stop() {
     io.setShootOpenLoop(0.0);
+    io.setFeedOpenLoop(0.0);
+  }
+
+  public void stopShoot() {
+    io.setShootOpenLoop(0.0);
+  }
+
+  public void stopFeed() {
     io.setFeedOpenLoop(0.0);
   }
 

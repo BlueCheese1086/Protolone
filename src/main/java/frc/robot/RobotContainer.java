@@ -13,17 +13,20 @@
 
 package frc.robot;
 
-import static frc.robot.subsystems.vision.VisionConstants.cameraName;
-import static frc.robot.subsystems.vision.VisionConstants.robotToCamera;
+import static frc.robot.subsystems.vision.VisionConstants.*;
+import static frc.robot.Constants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
@@ -39,6 +42,10 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+import java.util.EnumMap;
+import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -58,6 +65,17 @@ public class RobotContainer {
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
+
+  @AutoLogOutput
+  private EnumMap<RobotState, Trigger> stateRequests = new EnumMap<>(RobotState.class);
+
+  private EnumMap<RobotState, Trigger> stateTriggers = new EnumMap<>(RobotState.class);
+
+  private RobotState state = RobotState.IDLE;
+  private RobotState previousState = RobotState.IDLE;
+
+  private double shootVelocityTarget = 0.0;
+  private Rotation2d angleTarget = new Rotation2d();
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -170,6 +188,151 @@ public class RobotContainer {
                             new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
                     drive)
                 .ignoringDisable(true));
+
+    stateRequests.put(RobotState.IDLE, controller.y());
+    stateRequests.put(RobotState.INTAKE, controller.leftTrigger());
+    stateRequests.put(RobotState.EJECT, controller.rightBumper());
+    stateRequests.put(RobotState.AUTO_SCORE, controller.povUp());
+    stateRequests.put(RobotState.MANUAL_SCORE, controller.povDown());
+    stateRequests.put(RobotState.SCORE, controller.rightTrigger());
+    stateRequests.put(RobotState.MANUAL, controller.leftBumper());
+
+    for (RobotState state : RobotState.values()) {
+      stateTriggers.put(state, new Trigger(() -> this.state == state && DriverStation.isEnabled()));
+    }
+
+    stateTriggers
+        .get(RobotState.IDLE)
+        .and(stateRequests.get(RobotState.INTAKE))
+        .onTrue(forceState(RobotState.INTAKE));
+
+    stateTriggers
+        .get(RobotState.IDLE)
+        .or(stateTriggers.get(RobotState.INTAKE))
+        .and(shooter::getDetected)
+        .onTrue(forceState(RobotState.READY));
+
+    stateTriggers
+        .get(RobotState.INTAKE)
+        .and(stateRequests.get(RobotState.IDLE))
+        .onTrue(forceState(RobotState.IDLE));
+
+    stateTriggers
+        .get(RobotState.EJECT)
+        .or(stateTriggers.get(RobotState.READY))
+        .or(stateTriggers.get(RobotState.AUTO_SCORE))
+        .or(stateTriggers.get(RobotState.MANUAL_SCORE))
+        .or(stateTriggers.get(RobotState.SCORE))
+        .and(() -> !shooter.getDetected())
+        .onTrue(forceState(RobotState.IDLE));
+
+    stateTriggers
+        .get(RobotState.READY)
+        .or(stateTriggers.get(RobotState.AUTO_SCORE))
+        .or(stateTriggers.get(RobotState.MANUAL_SCORE))
+        .and(stateRequests.get(RobotState.IDLE))
+        .onTrue(forceState(RobotState.EJECT));
+
+    stateTriggers
+        .get(RobotState.READY)
+        .or(stateTriggers.get(RobotState.MANUAL_SCORE))
+        .and(stateRequests.get(RobotState.AUTO_SCORE))
+        .onTrue(forceState(RobotState.AUTO_SCORE));
+
+    stateTriggers
+        .get(RobotState.READY)
+        .or(stateTriggers.get(RobotState.AUTO_SCORE))
+        .and(stateRequests.get(RobotState.MANUAL_SCORE))
+        .onTrue(forceState(RobotState.MANUAL_SCORE));
+
+    stateTriggers
+        .get(RobotState.AUTO_SCORE)
+        .and(stateRequests.get(RobotState.SCORE))
+        // detect if parameters are correct
+        .and(() -> {
+          return true;
+        })
+        .onTrue(forceState(RobotState.SCORE));
+
+    stateTriggers
+        .get(RobotState.MANUAL_SCORE)
+        .and(stateRequests.get(RobotState.SCORE))
+        .onTrue(forceState(RobotState.SCORE));
+
+    stateTriggers
+        .get(RobotState.MANUAL)
+        .negate()
+        .and(stateRequests.get(RobotState.MANUAL))
+        .onTrue(forceState(RobotState.MANUAL));
+
+    // State commands
+    stateTriggers
+        .get(RobotState.IDLE)
+        .or(stateTriggers.get(RobotState.READY))
+        .whileTrue(Commands.run(shooter::stop));
+
+    stateTriggers.get(RobotState.INTAKE).whileTrue(Commands.run(shooter::intake));
+
+    stateTriggers.get(RobotState.EJECT).whileTrue(Commands.run(shooter::eject));
+
+    stateTriggers
+        .get(RobotState.AUTO_SCORE)
+        .whileTrue(
+            DriveCommands.joystickDriveAtAngle(
+                drive,
+                () -> -controller.getLeftY(),
+                () -> -controller.getLeftX(),
+                () -> angleTarget));
+
+    stateTriggers
+        .get(RobotState.AUTO_SCORE)
+        .whileTrue(Commands.run(() -> shooter.shoot(shootVelocityTarget)));
+
+    stateTriggers
+        .get(RobotState.AUTO_SCORE)
+        .whileTrue(Commands.run(() -> {
+          double timeOfFlight = 0.0;
+          Pose2d lookahead = drive.getLookahead(timeOfFlight);
+          Translation2d delta = targetPosition.minus(lookahead.getTranslation());
+          double distance = delta.getNorm();
+          // INSERT REGRESSIONS HERE
+          angleTarget = delta.getAngle().plus(new Rotation2d(distance * 0.0));
+          shootVelocityTarget = distance * 0.0;
+        }));
+
+    stateTriggers
+        .get(RobotState.MANUAL_SCORE)
+        .and(controller.leftTrigger())
+        .whileTrue(Commands.run(shooter::shoot));
+
+    stateTriggers
+        .get(RobotState.MANUAL_SCORE)
+        .and(controller.leftTrigger().negate())
+        .whileTrue(Commands.run(shooter::stopShoot));
+    
+    stateTriggers
+        .get(RobotState.SCORE)
+        .whileTrue(Commands.run(shooter::feed));
+
+    stateTriggers
+        .get(RobotState.MANUAL)
+        .and(controller.leftTrigger())
+        .whileTrue(Commands.run(shooter::shoot));
+
+    stateTriggers
+        .get(RobotState.MANUAL)
+        .and(controller.leftTrigger().negate())
+        .whileTrue(Commands.run(shooter::stopShoot));
+
+    stateTriggers
+        .get(RobotState.MANUAL)
+        .and(controller.rightTrigger())
+        .whileTrue(Commands.run(shooter::feed));
+
+    stateTriggers
+        .get(RobotState.MANUAL)
+        .and(controller.rightTrigger().negate())
+        .whileTrue(Commands.run(shooter::stopFeed));
   }
 
   /**
@@ -179,5 +342,14 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return autoChooser.get();
+  }
+
+  private Command forceState(RobotState nextState) {
+    return Commands.runOnce(
+        () -> {
+          System.out.println("Changing state to " + nextState);
+          previousState = state;
+          state = nextState;
+        });
   }
 }
