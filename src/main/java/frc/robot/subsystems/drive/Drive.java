@@ -50,7 +50,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
-import org.photonvision.jni.TimeSyncClient;
 
 public class Drive extends SubsystemBase {
   static final Lock odometryLock = new ReentrantLock();
@@ -326,12 +325,7 @@ public class Drive extends SubsystemBase {
   public Pose2d getLookahead(double timeSeconds) {
     Twist2d twist = getChassisSpeeds().toTwist2d(timeSeconds);
 
-    return getPose().transformBy(
-      new Transform2d(
-        twist.dx,
-        twist.dy,
-        Rotation2d.fromRadians(twist.dtheta)
-      )
-    );
+    return getPose()
+        .transformBy(new Transform2d(twist.dx, twist.dy, Rotation2d.fromRadians(twist.dtheta)));
   }
 }

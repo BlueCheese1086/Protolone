@@ -12,7 +12,7 @@ public class ShooterConstants {
   public static final double wheelEncoderVelocityFactor = 2 * Math.PI / 60;
 
   public static final double maxVelocity = 5500 * 2 * Math.PI;
-  public static final double shootKv = 1.0 / maxVelocity;
+  public static final double shootKv = 12.0 / maxVelocity;
   public static final double shootKp = 0.1;
 
   public static final double detectedTheshold = 10.0;
