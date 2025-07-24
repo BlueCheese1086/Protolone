@@ -302,13 +302,9 @@ public class RobotContainer {
 
     stateTriggers
         .get(RobotState.MANUAL_SCORE)
+        .or(stateTriggers.get(RobotState.MANUAL))
         .and(controller.leftTrigger())
-        .whileTrue(Commands.run(shooter::shoot));
-
-    stateTriggers
-        .get(RobotState.MANUAL_SCORE)
-        .and(controller.leftTrigger().negate())
-        .whileTrue(Commands.run(shooter::stopShoot));
+        .whileTrue(Commands.runEnd(shooter::shoot, shooter::stopShoot));
     
     stateTriggers
         .get(RobotState.SCORE)
@@ -316,23 +312,8 @@ public class RobotContainer {
 
     stateTriggers
         .get(RobotState.MANUAL)
-        .and(controller.leftTrigger())
-        .whileTrue(Commands.run(shooter::shoot));
-
-    stateTriggers
-        .get(RobotState.MANUAL)
-        .and(controller.leftTrigger().negate())
-        .whileTrue(Commands.run(shooter::stopShoot));
-
-    stateTriggers
-        .get(RobotState.MANUAL)
         .and(controller.rightTrigger())
-        .whileTrue(Commands.run(shooter::feed));
-
-    stateTriggers
-        .get(RobotState.MANUAL)
-        .and(controller.rightTrigger().negate())
-        .whileTrue(Commands.run(shooter::stopFeed));
+        .whileTrue(Commands.runEnd(shooter::feed, shooter::stopFeed));
   }
 
   /**
