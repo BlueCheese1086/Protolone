@@ -13,8 +13,8 @@
 
 package frc.robot;
 
-import static frc.robot.subsystems.vision.VisionConstants.*;
 import static frc.robot.Constants.*;
+import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -43,8 +43,7 @@ import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import java.util.EnumMap;
-import java.util.function.Supplier;
-
+import java.util.Map;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -66,10 +65,9 @@ public class RobotContainer {
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
-  @AutoLogOutput
-  private EnumMap<RobotState, Trigger> stateRequests = new EnumMap<>(RobotState.class);
+  @AutoLogOutput private Map<RobotState, Trigger> stateRequests = new EnumMap<>(RobotState.class);
 
-  private EnumMap<RobotState, Trigger> stateTriggers = new EnumMap<>(RobotState.class);
+  private Map<RobotState, Trigger> stateTriggers = new EnumMap<>(RobotState.class);
 
   private RobotState state = RobotState.IDLE;
   private RobotState previousState = RobotState.IDLE;
@@ -249,9 +247,10 @@ public class RobotContainer {
         .get(RobotState.AUTO_SCORE)
         .and(stateRequests.get(RobotState.SCORE))
         // detect if parameters are correct
-        .and(() -> {
-          return true;
-        })
+        .and(
+            () -> {
+              return true;
+            })
         .onTrue(forceState(RobotState.SCORE));
 
     stateTriggers
@@ -290,15 +289,18 @@ public class RobotContainer {
 
     stateTriggers
         .get(RobotState.AUTO_SCORE)
-        .whileTrue(Commands.run(() -> {
-          double timeOfFlight = 0.0;
-          Pose2d lookahead = drive.getLookahead(timeOfFlight);
-          Translation2d delta = targetPosition.minus(lookahead.getTranslation());
-          double distance = delta.getNorm();
-          // INSERT REGRESSIONS HERE
-          angleTarget = delta.getAngle().plus(new Rotation2d(distance * 0.0));
-          shootVelocityTarget = distance * 0.0;
-        }));
+        .whileTrue(
+            Commands.run(
+                () -> {
+                  Translation2d delta = targetPosition.minus(drive.getPose().getTranslation());
+                  double timeOfFlight = delta.getNorm() * 0.0;
+                  Pose2d lookahead = drive.getLookahead(timeOfFlight);
+                  Translation2d lookaheadDelta = targetPosition.minus(lookahead.getTranslation());
+                  double distance = lookaheadDelta.getNorm();
+                  // INSERT REGRESSIONS HERE
+                  angleTarget = lookaheadDelta.getAngle().plus(new Rotation2d(distance * 0.0));
+                  shootVelocityTarget = distance * 0.0;
+                }));
 
     stateTriggers
         .get(RobotState.MANUAL_SCORE)

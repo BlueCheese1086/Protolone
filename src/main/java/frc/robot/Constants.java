@@ -47,8 +47,5 @@ public final class Constants {
     MANUAL
   }
 
-  public static final Translation2d targetPosition = new Translation2d(
-    4.5,
-    4
-  );
+  public static final Translation2d targetPosition = new Translation2d(4.5, 4);
 }

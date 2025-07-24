@@ -53,9 +53,7 @@ public class ShooterIOSpark implements ShooterIO {
         .encoder
         .positionConversionFactor(wheelEncoderPositionFactor)
         .velocityConversionFactor(wheelEncoderVelocityFactor);
-    shootConfig
-        .closedLoop
-        .pidf(shootKp, 0.0, 0.0, 0.0);
+    shootConfig.closedLoop.pidf(shootKp, 0.0, 0.0, 0.0);
 
     feedSpark.configure(feedConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     shootSpark.configure(
@@ -88,6 +86,8 @@ public class ShooterIOSpark implements ShooterIO {
 
     if (measurement.status == LaserCanInterface.LASERCAN_STATUS_VALID_MEASUREMENT) {
       inputs.noteDetected = measurement.distance_mm < detectedTheshold;
+    } else {
+      inputs.noteDetected = false;
     }
   }
 
