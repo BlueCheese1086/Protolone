@@ -11,6 +11,7 @@ public interface ShooterIO {
 
     public boolean shootConnected = false;
     public double shootVelocityRadPerSec = 0.0;
+    public double shootPositionRad = 0.0;
     public double shootAppliedVolts = 0.0;
     public double shootCurrentAmps = 0.0;
 
@@ -26,4 +27,6 @@ public interface ShooterIO {
   public default void setShootOpenLoop(double output) {}
 
   public default void setShootVelocity(double velocityRadPerSec) {}
+
+  public default void setShootVelocity(double velocityRadPerSec, double feedforward) {}
 }

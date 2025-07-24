@@ -75,6 +75,7 @@ public class ShooterIOSpark implements ShooterIO {
     inputs.shootConnected = true;
 
     inputs.shootVelocityRadPerSec = shootEncoder.getVelocity();
+    inputs.shootPositionRad = shootEncoder.getPosition();
 
     inputs.feedAppliedVolts = feedSpark.getAppliedOutput() * feedSpark.getBusVoltage();
     inputs.shootAppliedVolts = shootSpark.getAppliedOutput() * shootSpark.getBusVoltage();
@@ -100,11 +101,15 @@ public class ShooterIOSpark implements ShooterIO {
   }
 
   public void setShootVelocity(double velocityRadPerSec) {
+    setShootVelocity(velocityRadPerSec, 0.0);
+  }
+
+  public void setShootVelocity(double velocityRadPerSec, double feedforward) {
     shootController.setReference(
         velocityRadPerSec,
         ControlType.kVelocity,
         ClosedLoopSlot.kSlot0,
-        velocityRadPerSec * shootKv,
+        feedforward,
         ArbFFUnits.kVoltage);
   }
 }
