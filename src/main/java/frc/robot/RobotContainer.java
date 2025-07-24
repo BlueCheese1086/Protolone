@@ -333,6 +333,11 @@ public class RobotContainer {
         .get(RobotState.MANUAL)
         .and(controller.leftTrigger())
         .whileTrue(Commands.runEnd(shooter::shoot, shooter::stopShoot));
+
+    stateTriggers
+        .get(RobotState.MANUAL)
+        .and(controller.rightBumper())
+        .whileTrue(Commands.runEnd(shooter::intake, shooter::stop));
   }
 
   /**
@@ -356,5 +361,10 @@ public class RobotContainer {
   @AutoLogOutput(key = "RobotState/DistanceToTarget")
   private double distanceToTarget() {
     return AllianceFlipUtil.apply(targetPosition).minus(drive.getPose().getTranslation()).getNorm();
+  }
+
+  @AutoLogOutput(key = "RobotState/AngleToTarget")
+  private double angleToTarget() {
+    return AllianceFlipUtil.apply(targetPosition).minus(drive.getPose().getTranslation()).getAngle().getRadians();
   }
 }
