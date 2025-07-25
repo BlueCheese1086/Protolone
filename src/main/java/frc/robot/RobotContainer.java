@@ -256,7 +256,6 @@ public class RobotContainer {
         .or(stateTriggers.get(RobotState.READY))
         .or(stateTriggers.get(RobotState.AUTO_SCORE))
         .or(stateTriggers.get(RobotState.MANUAL_SCORE))
-        .or(stateTriggers.get(RobotState.SCORE))
         .and(() -> !shooter.getDetected())
         .onTrue(forceState(RobotState.IDLE));
 
@@ -292,7 +291,12 @@ public class RobotContainer {
     stateTriggers
         .get(RobotState.MANUAL_SCORE)
         .and(stateRequests.get(RobotState.SCORE))
-        .onTrue(forceState(RobotState.SCORE));
+        .onTrue(forceState(RobotState.SCORE))
+
+    stateTriggers
+        .get(RobotState.SCORE)
+        .and(() -> !shooter.getDetected())
+        .onTrue(Commands.sequence(Commands.waitSeconds(0.5)), forceState(RobotState.IDLE));
 
     stateTriggers
         .get(RobotState.MANUAL)
