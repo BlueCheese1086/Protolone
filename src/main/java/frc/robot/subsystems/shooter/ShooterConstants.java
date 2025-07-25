@@ -19,7 +19,7 @@ public class ShooterConstants {
   public static final double shootKv = 12.0 / maxVelocity;
   public static final double shootKa = 0.0;
 
-  public static final double shootKp = 0.1;
+  public static final double shootKp = 0.0001;
   public static final double shootKd = 0.0;
 
   public static final DCMotor shootMotorGearbox = DCMotor.getNEO(1);
