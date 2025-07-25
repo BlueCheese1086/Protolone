@@ -17,9 +17,11 @@ import static frc.robot.Constants.*;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
@@ -28,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.RobotState;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -44,6 +47,8 @@ import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.ShooterSettings;
+import frc.robot.util.SplineInterpolation;
 import java.util.EnumMap;
 import java.util.Map;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -69,6 +74,9 @@ public class RobotContainer {
 
   private Map<RobotState, Trigger> stateRequests = new EnumMap<>(RobotState.class);
   private Map<RobotState, Trigger> stateTriggers = new EnumMap<>(RobotState.class);
+
+  InterpolatingTreeMap<Double, ShooterSettings> table =
+      new InterpolatingTreeMap<>(MathUtil::inverseInterpolate, ShooterSettings::interpolate);
 
   @AutoLogOutput(key = "RobotState/CurrentState")
   private RobotState state = RobotState.IDLE;
@@ -148,6 +156,28 @@ public class RobotContainer {
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
+    // Adding Regression Values for Auto Aim
+    table.put(2.14, new ShooterSettings(0.26, 280));
+    table.put(2.17, new ShooterSettings(0.32, 290));
+    table.put(2.39, new ShooterSettings(0.245, 270));
+    table.put(2.55, new ShooterSettings(0.38, 380));
+    table.put(2.78, new ShooterSettings(0.18, 400));
+    table.put(2.88, new ShooterSettings(0.197, 380));
+    table.put(2.9, new ShooterSettings(0.29, 400));
+    table.put(2.9, new ShooterSettings(0.13, 615));
+    table.put(2.9, new ShooterSettings(0.07, 620));
+    table.put(3.0, new ShooterSettings(0.411, 360));
+    table.put(3.0, new ShooterSettings(0.28, 400));
+    table.put(3.13, new ShooterSettings(0.31, 620));
+    table.put(3.144, new ShooterSettings(0.39, 400));
+    table.put(3.15, new ShooterSettings(0.144, 400));
+    table.put(3.2, new ShooterSettings(0.28, 620));
+    table.put(3.3, new ShooterSettings(0.05, 620));
+    table.put(3.3, new ShooterSettings(0.18, 620));
+    table.put(3.5, new ShooterSettings(0.27, 620));
+
+    SplineInterpolation interpolation = new SplineInterpolation();
+    interpolation.interpolate();
     // Configure the button bindings
     configureButtonBindings();
   }
@@ -159,6 +189,7 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
+
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
