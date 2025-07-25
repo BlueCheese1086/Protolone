@@ -365,6 +365,10 @@ public class RobotContainer {
 
   @AutoLogOutput(key = "RobotState/AngleToTarget")
   private double angleToTarget() {
-    return AllianceFlipUtil.apply(targetPosition).minus(drive.getPose().getTranslation()).getAngle().getRadians();
+    return AllianceFlipUtil.apply(targetPosition)
+        .minus(drive.getPose().getTranslation())
+        .getAngle()
+        .minus(drive.getRotation())
+        .getRadians();
   }
 }
