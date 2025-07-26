@@ -260,7 +260,7 @@ public class RobotContainer {
     stateTriggers
         .get(RobotState.MANUAL_SCORE)
         .and(stateRequests.get(RobotState.SCORE))
-        .onTrue(forceState(RobotState.SCORE))
+        .onTrue(forceState(RobotState.SCORE));
 
     stateTriggers
         .get(RobotState.SCORE)
