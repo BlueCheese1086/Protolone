@@ -265,7 +265,7 @@ public class RobotContainer {
     stateTriggers
         .get(RobotState.SCORE)
         .and(() -> !shooter.getDetected())
-        .onTrue(Commands.sequence(Commands.waitSeconds(0.5)), forceState(RobotState.IDLE));
+        .onTrue(Commands.sequence(Commands.waitSeconds(0.5), forceState(RobotState.IDLE)));
 
     stateTriggers
         .get(RobotState.MANUAL)
