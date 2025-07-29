@@ -13,8 +13,7 @@ public class ShooterConstants {
   public static final double wheelEncoderPositionFactor = 2 * Math.PI;
   public static final double wheelEncoderVelocityFactor = 2 * Math.PI / 60;
 
-  public static final double maxVelocity = 5500 * 2 * Math.PI / 60;  // Rpm to radians to velocity
-
+  public static final double maxVelocity = 5500 * 2 * Math.PI / 60; // Rpm to radians to velocity
 
   public static final double shootKs = 0.0;
   public static final double shootKv = 12.0 / maxVelocity;

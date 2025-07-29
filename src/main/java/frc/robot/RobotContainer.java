@@ -22,6 +22,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -44,6 +45,10 @@ import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AllianceFlipUtil;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.Map;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -78,6 +83,9 @@ public class RobotContainer {
 
   private double shootVelocityTarget = 0.0;
   private Rotation2d angleTarget = new Rotation2d();
+
+  private double startingTime = 0.0;
+  private double endingTime = 0.0;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -288,6 +296,28 @@ public class RobotContainer {
         .get(RobotState.IDLE)
         .or(stateTriggers.get(RobotState.READY))
         .whileTrue(Commands.run(shooter::stop));
+
+    stateTriggers
+        .get(RobotState.IDLE)
+        .and(controller.rightTrigger())
+        .whileTrue(
+            Commands.startEnd(
+                () -> startingTime = Timer.getTimestamp(),
+                () -> endingTime = Timer.getTimestamp() - startingTime));
+
+    stateTriggers
+        .get(RobotState.IDLE)
+        .and(controller.povRight())
+        .onTrue(
+            Commands.run(
+                () -> {
+                  try {
+                    FileWriter fileWriter = new FileWriter("ShotMap.csv");
+                    fileWriter.write(distanceToTarget() + "," + shooter.getShootVelocity() + "," + angleToTarget() + "," + endingTime + "\n");
+                  } catch (IOException e) {
+                    System.out.println("IO Exception");
+                  }
+                }));
 
     stateTriggers.get(RobotState.INTAKE).whileTrue(Commands.run(shooter::intake));
 
