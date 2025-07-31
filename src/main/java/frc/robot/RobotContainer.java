@@ -353,7 +353,6 @@ public class RobotContainer {
 
     stateTriggers
         .get(RobotState.MANUAL_SCORE)
-        .and(controller.leftTrigger())
         .whileTrue(Commands.run(shooter::shoot));
 
     stateTriggers.get(RobotState.SCORE).whileTrue(Commands.run(shooter::feed));
