@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
@@ -22,7 +21,8 @@ public class Shooter extends SubsystemBase {
   private final ShooterIO io;
   private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
 
-  LoggedNetworkNumber shootVelocity = new LoggedNetworkNumber("Tuning/Shooter/ShootVelocity", maxVelocity);
+  LoggedNetworkNumber shootVelocity =
+      new LoggedNetworkNumber("Tuning/Shooter/ShootVelocity", maxVelocity);
 
   SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(shootKs, shootKv, shootKa);
 
@@ -99,31 +99,31 @@ public class Shooter extends SubsystemBase {
 
   public Command getShooterSysIdQuasistatic(Direction direction) {
     return new SysIdRoutine(
-        new SysIdRoutine.Config(),
-        new SysIdRoutine.Mechanism(
-            volts -> runVoltageShooter(volts),
-            log -> {
-              log.motor("shooter")
-                  .voltage(getShooterVoltage())
-                  .angularVelocity(getShooterVelocityEncoder())
-                  .angularPosition(getShooterPosition());
-            },
-            this))
+            new SysIdRoutine.Config(),
+            new SysIdRoutine.Mechanism(
+                volts -> runVoltageShooter(volts),
+                log -> {
+                  log.motor("shooter")
+                      .voltage(getShooterVoltage())
+                      .angularVelocity(getShooterVelocityEncoder())
+                      .angularPosition(getShooterPosition());
+                },
+                this))
         .quasistatic(direction);
   }
 
   public Command getShooterSysIdDynamic(Direction direction) {
     return new SysIdRoutine(
-        new SysIdRoutine.Config(),
-        new SysIdRoutine.Mechanism(
-            volts -> runVoltageShooter(volts),
-            log -> {
-              log.motor("shooter")
-              .voltage(getShooterVoltage())
-              .angularVelocity(getShooterVelocityEncoder())
-              .angularPosition(getShooterPosition());
-            },
-            this))
+            new SysIdRoutine.Config(),
+            new SysIdRoutine.Mechanism(
+                volts -> runVoltageShooter(volts),
+                log -> {
+                  log.motor("shooter")
+                      .voltage(getShooterVoltage())
+                      .angularVelocity(getShooterVelocityEncoder())
+                      .angularPosition(getShooterPosition());
+                },
+                this))
         .dynamic(direction);
   }
 }
