@@ -47,7 +47,6 @@ import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.ShooterSettings;
-import frc.robot.util.ShooterSettings;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.EnumMap;
@@ -168,16 +167,12 @@ public class RobotContainer {
     ShooterSettings.settingsMap.put(2.78, new ShooterSettings(0.18, 400));
     ShooterSettings.settingsMap.put(2.88, new ShooterSettings(0.197, 380));
     ShooterSettings.settingsMap.put(2.9, new ShooterSettings(0.29, 400));
-    // ShooterSettings.settingsMap.put(2.9, new ShooterSettings(0.13, 615));
-    // ShooterSettings.settingsMap.put(2.9, new ShooterSettings(0.07, 620));
     ShooterSettings.settingsMap.put(3.0, new ShooterSettings(0.411, 360));
-    // ShooterSettings.settingsMap.put(3.0, new ShooterSettings(0.28, 400));
     ShooterSettings.settingsMap.put(3.13, new ShooterSettings(0.31, 620));
     ShooterSettings.settingsMap.put(3.144, new ShooterSettings(0.39, 400));
     ShooterSettings.settingsMap.put(3.15, new ShooterSettings(0.144, 400));
     ShooterSettings.settingsMap.put(3.2, new ShooterSettings(0.28, 620));
     ShooterSettings.settingsMap.put(3.3, new ShooterSettings(0.05, 620));
-    // ShooterSettings.settingsMap.put(3.3, new ShooterSettings(0.18, 620));
     ShooterSettings.settingsMap.put(3.5, new ShooterSettings(0.27, 620));
 
     // Configure your controller
@@ -329,7 +324,15 @@ public class RobotContainer {
                 () -> {
                   try {
                     FileWriter fileWriter = new FileWriter("ShotMap.csv");
-                    fileWriter.write(distanceToTarget() + "," + shooter.getShootVelocity() + "," + angleToTarget() + "," + endingTime + "\n");
+                    fileWriter.write(
+                        distanceToTarget()
+                            + ","
+                            + shooter.getShootVelocity()
+                            + ","
+                            + angleToTarget()
+                            + ","
+                            + endingTime
+                            + "\n");
                   } catch (IOException e) {
                     System.out.println("IO Exception");
                   }
@@ -339,12 +342,11 @@ public class RobotContainer {
 
     stateTriggers.get(RobotState.EJECT).whileTrue(Commands.run(shooter::eject));
 
-    // stateTriggers
-    // .get(RobotState.AUTO_SCORE)
-    // .whileTrue(
-    // DriveCommands.joystickDriveAtAngle(
-    // drive, () -> -controller.getLeftY(), () -> -controller.getLeftX(), () ->
-    // 0.0));
+    stateTriggers
+        .get(RobotState.AUTO_SCORE)
+        .whileTrue(
+            DriveCommands.joystickDriveAtAngle(
+                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX(), () -> 0.0));
 
     stateTriggers
         .get(RobotState.AUTO_SCORE)
@@ -365,9 +367,7 @@ public class RobotContainer {
                   shootVelocityTarget = distance * 1.0;
                 }));
 
-    stateTriggers
-        .get(RobotState.MANUAL_SCORE)
-        .whileTrue(Commands.run(shooter::shoot));
+    stateTriggers.get(RobotState.MANUAL_SCORE).whileTrue(Commands.run(shooter::shoot));
 
     stateTriggers.get(RobotState.SCORE).whileTrue(Commands.run(shooter::feed));
 
@@ -400,8 +400,8 @@ public class RobotContainer {
 
                 // Run the feeder
                 Commands.runOnce(shooter::feed)))
-            .or(new Trigger(()-> !shooter.getDetected()))
-            .onTrue(Commands.runOnce(()-> shooter.stop()));
+        .or(new Trigger(() -> !shooter.getDetected()))
+        .onTrue(Commands.runOnce(() -> shooter.stop()));
 
     stateTriggers
         .get(RobotState.MANUAL)
