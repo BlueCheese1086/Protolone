@@ -67,4 +67,8 @@ public class Shooter extends SubsystemBase {
   public boolean getDetected() {
     return inputs.noteDetected;
   }
+
+  public double getShootVelocity() {
+    return shootVelocity.get();
+  }
 }
