@@ -23,7 +23,7 @@ public class ShooterConstants {
   public static final double shootKp = 0.0001;
   public static final double shootKd = 0.0;
 
-  public static final double simShootKp = 1.0;
+  public static final double simShootKp = 0.001;
 
   public static final DCMotor shootMotorGearbox = DCMotor.getNEO(1);
   public static final DCMotor feedMotorGearbox = DCMotor.getNEO(1);
