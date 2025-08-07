@@ -1,16 +1,3 @@
-// Copyright 2021-2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
@@ -28,6 +15,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import java.text.DecimalFormat;
@@ -36,10 +24,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.Logger;
 
 public class DriveCommands {
   private static final double DEADBAND = 0.1;
-  private static final double ANGLE_KP = 5.0;
+  private static final double ANGLE_KP = 1.0;
   private static final double ANGLE_KD = 0.4;
   private static final double ANGLE_MAX_VELOCITY = 8.0;
   private static final double ANGLE_MAX_ACCELERATION = 20.0;
@@ -97,8 +86,8 @@ public class DriveCommands {
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   speeds,
                   isFlipped
-                      ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                      : drive.getRotation()));
+                      ? drive.getRotation()
+                      : drive.getRotation().plus(new Rotation2d(Math.PI))));
         },
         drive);
   }
@@ -112,49 +101,74 @@ public class DriveCommands {
       Drive drive,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-      Supplier<Rotation2d> rotationSupplier) {
+      Supplier<Double>
+          targetAngleOffsetRadians // Target-relative offset, e.g. from interpolateAngle()
+      ) {
 
-    // Create PID controller
     ProfiledPIDController angleController =
         new ProfiledPIDController(
             ANGLE_KP,
             0.0,
             ANGLE_KD,
             new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
-    angleController.enableContinuousInput(-Math.PI, Math.PI);
 
-    // Construct command
+    angleController.enableContinuousInput(-Math.PI, Math.PI);
+    angleController.setTolerance(0.001);
+
+    // Create a shared supplier for the final field-relative heading we want to face
+    Supplier<Double> targetHeadingSupplier =
+        () -> {
+          // Angle from robot to target, in field space
+          Rotation2d robotToTargetAngle =
+              Constants.targetPosition.minus(drive.getPose().getTranslation()).getAngle();
+
+          // Final target = offset from this angle (e.g. to arc the shot)
+          return MathUtil.angleModulus(
+              robotToTargetAngle.getRadians() + targetAngleOffsetRadians.get());
+        };
+
     return Commands.run(
             () -> {
-              // Get linear velocity
               Translation2d linearVelocity =
                   getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
 
-              // Calculate angular speed
-              double omega =
-                  angleController.calculate(
-                      drive.getRotation().getRadians(), rotationSupplier.get().getRadians());
+              double omega = angleController.calculate(drive.getRotation().getRadians());
 
-              // Convert to field relative speeds & send command
+              Logger.recordOutput("AutoAim/RobotRadians", drive.getRotation().getRadians());
+              Logger.recordOutput("AutoAim/TargetHeading", targetHeadingSupplier.get());
+              Logger.recordOutput("AutoAim/Error", angleController.getPositionError());
+
               ChassisSpeeds speeds =
                   new ChassisSpeeds(
                       linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
                       linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
                       omega);
+
               boolean isFlipped =
                   DriverStation.getAlliance().isPresent()
                       && DriverStation.getAlliance().get() == Alliance.Red;
+
               drive.runVelocity(
                   ChassisSpeeds.fromFieldRelativeSpeeds(
                       speeds,
                       isFlipped
-                          ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                          : drive.getRotation()));
+                          ? drive.getRotation()
+                          : drive.getRotation().plus(new Rotation2d(Math.PI))));
             },
             drive)
-
-        // Reset PID controller when command starts
-        .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+        .beforeStarting(
+            () -> {
+              angleController.reset(drive.getRotation().getRadians());
+              angleController.setGoal(targetHeadingSupplier.get());
+            })
+        .until(
+            () -> {
+              double error =
+                  MathUtil.angleModulus(
+                      targetHeadingSupplier.get() - drive.getRotation().getRadians());
+              Logger.recordOutput("AutoAim/AngleError", Math.abs(error));
+              return Math.abs(error) < 0.001;
+            });
   }
 
   /**

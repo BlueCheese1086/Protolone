@@ -17,11 +17,9 @@ import static frc.robot.Constants.*;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
@@ -48,7 +46,6 @@ import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.ShooterSettings;
-import frc.robot.util.SplineInterpolation;
 import java.util.EnumMap;
 import java.util.Map;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -74,9 +71,6 @@ public class RobotContainer {
 
   private Map<RobotState, Trigger> stateRequests = new EnumMap<>(RobotState.class);
   private Map<RobotState, Trigger> stateTriggers = new EnumMap<>(RobotState.class);
-
-  InterpolatingTreeMap<Double, ShooterSettings> table =
-      new InterpolatingTreeMap<>(MathUtil::inverseInterpolate, ShooterSettings::interpolate);
 
   @AutoLogOutput(key = "RobotState/CurrentState")
   private RobotState state = RobotState.IDLE;
@@ -156,29 +150,30 @@ public class RobotContainer {
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-    // Adding Regression Values for Auto Aim
-    table.put(2.14, new ShooterSettings(0.26, 280));
-    table.put(2.17, new ShooterSettings(0.32, 290));
-    table.put(2.39, new ShooterSettings(0.245, 270));
-    table.put(2.55, new ShooterSettings(0.38, 380));
-    table.put(2.78, new ShooterSettings(0.18, 400));
-    table.put(2.88, new ShooterSettings(0.197, 380));
-    table.put(2.9, new ShooterSettings(0.29, 400));
-    table.put(2.9, new ShooterSettings(0.13, 615));
-    table.put(2.9, new ShooterSettings(0.07, 620));
-    table.put(3.0, new ShooterSettings(0.411, 360));
-    table.put(3.0, new ShooterSettings(0.28, 400));
-    table.put(3.13, new ShooterSettings(0.31, 620));
-    table.put(3.144, new ShooterSettings(0.39, 400));
-    table.put(3.15, new ShooterSettings(0.144, 400));
-    table.put(3.2, new ShooterSettings(0.28, 620));
-    table.put(3.3, new ShooterSettings(0.05, 620));
-    table.put(3.3, new ShooterSettings(0.18, 620));
-    table.put(3.5, new ShooterSettings(0.27, 620));
+    enableSequence(); // Start putting interpolation data in
+  }
 
-    SplineInterpolation interpolation = new SplineInterpolation();
-    interpolation.interpolate();
-    // Configure the button bindings
+  public void enableSequence() {
+    ShooterSettings.settingsMap.put(2.14, new ShooterSettings(0.26, 280));
+    ShooterSettings.settingsMap.put(2.17, new ShooterSettings(0.32, 290));
+    ShooterSettings.settingsMap.put(2.39, new ShooterSettings(0.245, 270));
+    ShooterSettings.settingsMap.put(2.55, new ShooterSettings(0.38, 380));
+    ShooterSettings.settingsMap.put(2.78, new ShooterSettings(0.18, 400));
+    ShooterSettings.settingsMap.put(2.88, new ShooterSettings(0.197, 380));
+    ShooterSettings.settingsMap.put(2.9, new ShooterSettings(0.29, 400));
+    // ShooterSettings.settingsMap.put(2.9, new ShooterSettings(0.13, 615));
+    // ShooterSettings.settingsMap.put(2.9, new ShooterSettings(0.07, 620));
+    ShooterSettings.settingsMap.put(3.0, new ShooterSettings(0.411, 360));
+    // ShooterSettings.settingsMap.put(3.0, new ShooterSettings(0.28, 400));
+    ShooterSettings.settingsMap.put(3.13, new ShooterSettings(0.31, 620));
+    ShooterSettings.settingsMap.put(3.144, new ShooterSettings(0.39, 400));
+    ShooterSettings.settingsMap.put(3.15, new ShooterSettings(0.144, 400));
+    ShooterSettings.settingsMap.put(3.2, new ShooterSettings(0.28, 620));
+    ShooterSettings.settingsMap.put(3.3, new ShooterSettings(0.05, 620));
+    // ShooterSettings.settingsMap.put(3.3, new ShooterSettings(0.18, 620));
+    ShooterSettings.settingsMap.put(3.5, new ShooterSettings(0.27, 620));
+
+    // Configure your controller
     configureButtonBindings();
   }
 
@@ -198,29 +193,19 @@ public class RobotContainer {
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    // Lock to 0° when A button is held
-    controller
-        .a()
-        .whileTrue(
-            DriveCommands.joystickDriveAtAngle(
-                drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> new Rotation2d()));
-
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
     // Reset gyro to 0° when B button is pressed
-    controller
-        .b()
-        .onTrue(
-            Commands.runOnce(
-                    () ->
-                        drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
-                    drive)
-                .ignoringDisable(true));
+    // controller
+    // .b()
+    // .onTrue(
+    // Commands.runOnce(
+    // () ->
+    // drive.setPose(
+    // new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
+    // drive)
+    // .ignoringDisable(true));
 
     stateRequests.put(RobotState.IDLE, controller.y());
     stateRequests.put(RobotState.INTAKE, controller.leftTrigger());
@@ -256,6 +241,7 @@ public class RobotContainer {
         .or(stateTriggers.get(RobotState.READY))
         .or(stateTriggers.get(RobotState.AUTO_SCORE))
         .or(stateTriggers.get(RobotState.MANUAL_SCORE))
+        .or(stateTriggers.get(RobotState.SCORE))
         .and(() -> !shooter.getDetected())
         .onTrue(forceState(RobotState.IDLE));
 
@@ -291,12 +277,7 @@ public class RobotContainer {
     stateTriggers
         .get(RobotState.MANUAL_SCORE)
         .and(stateRequests.get(RobotState.SCORE))
-        .onTrue(forceState(RobotState.SCORE))
-
-    stateTriggers
-        .get(RobotState.SCORE)
-        .and(() -> !shooter.getDetected())
-        .onTrue(Commands.sequence(Commands.waitSeconds(0.5)), forceState(RobotState.IDLE));
+        .onTrue(forceState(RobotState.SCORE));
 
     stateTriggers
         .get(RobotState.MANUAL)
@@ -324,14 +305,12 @@ public class RobotContainer {
 
     stateTriggers.get(RobotState.EJECT).whileTrue(Commands.run(shooter::eject));
 
-    stateTriggers
-        .get(RobotState.AUTO_SCORE)
-        .whileTrue(
-            DriveCommands.joystickDriveAtAngle(
-                drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> angleTarget));
+    // stateTriggers
+    // .get(RobotState.AUTO_SCORE)
+    // .whileTrue(
+    // DriveCommands.joystickDriveAtAngle(
+    // drive, () -> -controller.getLeftY(), () -> -controller.getLeftX(), () ->
+    // 0.0));
 
     stateTriggers
         .get(RobotState.AUTO_SCORE)
@@ -366,13 +345,50 @@ public class RobotContainer {
 
     stateTriggers
         .get(RobotState.MANUAL)
+        .and(controller.b())
+        .onTrue(
+            Commands.sequence(
+                Commands.race(
+                    DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () ->
+                            ShooterSettings.interpolateAngle(
+                                targetPosition.minus(drive.getPose().getTranslation()).getNorm())),
+                    Commands.run(
+                        () ->
+                            shooter.shoot(
+                                ShooterSettings.interpolatePower(
+                                    targetPosition
+                                        .minus(drive.getPose().getTranslation())
+                                        .getNorm())),
+                        shooter)),
+
+                // Run the feeder
+                Commands.runOnce(shooter::feed)))
+            .or(new Trigger(()-> !shooter.getDetected()))
+            .onTrue(Commands.runOnce(()-> shooter.stop()));
+
+    stateTriggers
+        .get(RobotState.MANUAL)
         .and(controller.leftTrigger())
         .whileTrue(Commands.runEnd(shooter::shoot, shooter::stopShoot));
 
     stateTriggers
         .get(RobotState.MANUAL)
+        .and(controller.a())
+        .whileTrue(Commands.runEnd(shooter::feed, shooter::stopFeed));
+
+    stateTriggers
+        .get(RobotState.MANUAL)
         .and(controller.rightBumper())
         .whileTrue(Commands.runEnd(shooter::intake, shooter::stop));
+    stateTriggers
+        .get(RobotState.MANUAL)
+        .and(controller.rightBumper())
+        .and(controller.leftBumper())
+        .whileTrue(Commands.runOnce(shooter::stop));
   }
 
   /**
@@ -395,11 +411,11 @@ public class RobotContainer {
 
   @AutoLogOutput(key = "RobotState/DistanceToTarget")
   private double distanceToTarget() {
-    return AllianceFlipUtil.apply(targetPosition).minus(drive.getPose().getTranslation()).getNorm();
+    return targetPosition.minus(drive.getPose().getTranslation()).getNorm();
   }
 
   @AutoLogOutput(key = "RobotState/AngleToTarget")
-  private double angleToTarget() {
+  public double angleToTarget() {
     return AllianceFlipUtil.apply(targetPosition)
         .minus(drive.getPose().getTranslation())
         .getAngle()

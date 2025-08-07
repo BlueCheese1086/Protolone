@@ -8,6 +8,7 @@ public interface ShooterIO {
     public boolean feedConnected = false;
     public double feedAppliedVolts = 0.0;
     public double feedCurrentAmps = 0.0;
+    public double feedVelocityRadPerSec = 0.0;
 
     public boolean shootConnected = false;
     public double shootVelocityRadPerSec = 0.0;

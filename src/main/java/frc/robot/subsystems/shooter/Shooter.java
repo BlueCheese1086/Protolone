@@ -3,6 +3,7 @@ package frc.robot.subsystems.shooter;
 import static frc.robot.subsystems.shooter.ShooterConstants.*;
 
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -27,7 +28,9 @@ public class Shooter extends SubsystemBase {
   }
 
   public void shoot(double velocityRadPerSec) {
-    io.setShootVelocity(velocityRadPerSec, feedforward.calculate(velocityRadPerSec));
+    SlewRateLimiter ramp = new SlewRateLimiter(100);
+    double rampedTarget = ramp.calculate(velocityRadPerSec);
+    io.setShootVelocity(rampedTarget, feedforward.calculate(velocityRadPerSec));
   }
 
   public void shoot() {

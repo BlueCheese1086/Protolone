@@ -16,14 +16,19 @@ public class ShooterConstants {
   public static final double maxVelocity = 5500 * 2 * Math.PI / 60; // Rpm to radians to velocity
 
   public static final double shootKs = 0.0;
-  public static final double shootKv = 12.0 / maxVelocity;
+  // public static final double shootKv = 12.0 / maxVelocity;
+  public static final double shootKv = 0.02;
   public static final double shootKa = 0.0;
 
   public static final double shootKp = 0.0001;
   public static final double shootKd = 0.0;
 
+  public static final double simShootKp = 1.0;
+
   public static final DCMotor shootMotorGearbox = DCMotor.getNEO(1);
-  public static final double shootMOI = 0.00351;
+  public static final DCMotor feedMotorGearbox = DCMotor.getNEO(1);
+
+  public static final double dcMotorMOI = 0.00351;
 
   public static final double detectedTheshold = 10.0;
 }
