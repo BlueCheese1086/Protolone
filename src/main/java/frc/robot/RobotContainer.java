@@ -325,6 +325,12 @@ public class RobotContainer {
 
     stateTriggers
         .get(RobotState.AUTO_SCORE)
+        .or(stateTriggers.get(RobotState.MANUAL_SCORE))
+        .and(stateRequests.get(RobotState.READY))
+        .onTrue(forceState(RobotState.READY));
+
+    stateTriggers
+        .get(RobotState.AUTO_SCORE)
         .whileTrue(
             DriveCommands.joystickDriveAtAngle(
                 drive,
